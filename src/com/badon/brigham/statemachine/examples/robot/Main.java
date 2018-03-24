@@ -1,8 +1,14 @@
 package com.badon.brigham.statemachine.examples.robot;
 
+import java.io.Console;
+
 import com.badon.brigham.statemachine.base.StateEnteredListener;
 
 public class Main {
+	
+	private static final boolean DEBUG = true;
+	private static final String[] COMMAND_LIST = {"armCollect", "armUp", "carriageDormant"};
+	private static int commandIteration = 0;
 	
 	public static StateEnteredListener mListener = new StateEnteredListener() {
 
@@ -16,11 +22,26 @@ public class Main {
 	public static void main(String[] args) {
 		Robot robot = new Robot();
 		
-		printInstructions();
-		waitForCommand();
+		if (!checkRunningContext()) {
+			printInstructions();
+			waitForCommand();
+		}
+	}
+	
+	@SuppressWarnings("unused")
+	private static boolean checkRunningContext() {
+		Console console = System.console();
+		if (!DEBUG && console == null) {
+			System.out.println("Demo must be run outside of the IDE");
+			return true;
+		}
+		return false;
 	}
 	
 	private static void printInstructions() {
+		if (DEBUG) {
+			return;
+		}
 		System.out.println("Use the following commands to test the StateMachine library:");
 		System.out.print("armCollect    ");
 		System.out.print("armDown    ");
@@ -33,8 +54,20 @@ public class Main {
 	}
 	
 	private static void waitForCommand() {
-		System.out.print("\nEnter a command: ");
-		String input = System.console().readLine();
+		String input;
+		if (DEBUG) {
+			if (commandIteration < COMMAND_LIST.length) {
+				input = COMMAND_LIST[commandIteration];
+				commandIteration++;
+			} else {
+				return;
+			}
+		} else {
+			System.out.print("\nEnter a command: ");
+			Console console = System.console();
+			input = System.console().readLine();
+		}
+		
 		switch (input) {
 		case "armCollect": {
 			Robot.arm.requestState(Arm.STATE_COLLECT, mListener);
@@ -63,6 +96,10 @@ public class Main {
 		case "carriageFireDown": {
 			Robot.carriage.requestState(Carriage.STATE_FIRE_DOWN, mListener);
 			break;
+		}
+		default: {
+			System.out.println(" *** Unknown command *** ");
+			waitForCommand();
 		}
 		}
 	}
